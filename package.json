@@ -1,0 +1,71 @@
+{
+  "name": "markwhen",
+  "displayName": "Markwhen",
+  "description": "Visualize and edit markwhen documents",
+  "version": "0.0.1",
+  "icon": "icons/markwhen.png",
+  "engines": {
+    "vscode": "^1.69.0"
+  },
+  "keywords": ["timeline", "gantt"],
+  "categories": [
+    "Other", "Visualization"
+  ],
+  "activationEvents": [
+    "onCustomEditor:markwhen.timeline",
+    "onLanguage:markwhen"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "markwhen.timeline",
+        "displayName": "Markwhen",
+        "selector": [
+          {
+            "filenamePattern": "*.mw"
+          }
+        ]
+      }
+    ],
+    "languages": [{
+      "id": "markwhen",
+      "aliases": [
+        "mw", "Markwhen"
+      ],
+      "extensions": [
+        "*.mw"
+      ],
+      "icon": {
+        "dark": "./icons/icon.svg",
+        "light": "./icons/icon.svg"
+      }
+    }],
+    "iconThemes": [{
+      "id": "markwhen",
+      "label": "Markwhen",
+      "path": "./icons/markwhen-icon-theme.json"
+    }]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.69.0",
+    "@types/glob": "^7.2.0",
+    "@types/mocha": "^9.1.1",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.31.0",
+    "@typescript-eslint/parser": "^5.31.0",
+    "eslint": "^8.20.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.0.0",
+    "typescript": "^4.7.4",
+    "@vscode/test-electron": "^2.1.5"
+  }
+}

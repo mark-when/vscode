@@ -1,0 +1,13 @@
+{
+  "iconDefinitions": {
+    "mw_file": {
+      "iconPath": "./icon.svg"
+    }
+  },
+  "fileExtensions": {
+    "mw": "mw_file"
+  },
+  "languageIds": {
+    "mw": "mw_file"
+  }
+}
