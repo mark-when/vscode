@@ -2,11 +2,15 @@
   "name": "markwhen",
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "icon": "icons/markwhen.png",
   "engines": {
     "vscode": "^1.69.0"
   },
+  "sponsor": {
+    "url": "https://github.com/sponsors/kochrt"
+  },
+  "publisher": "Markwhen",
   "keywords": ["timeline", "gantt"],
   "categories": [
     "Other", "Visualization"

@@ -7,7 +7,12 @@ export class MarkwhenTimelineEditorProvider
     const provider = new MarkwhenTimelineEditorProvider(context);
     const providerRegisgration = vscode.window.registerCustomEditorProvider(
       MarkwhenTimelineEditorProvider.viewType,
-      provider
+      provider,
+      {
+        webviewOptions: {
+          retainContextWhenHidden: true,
+        },
+      }
     );
     return providerRegisgration;
   }
