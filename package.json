@@ -11,15 +11,25 @@
     "url": "https://github.com/sponsors/kochrt"
   },
   "publisher": "Markwhen",
-  "keywords": ["timeline", "gantt"],
+  "keywords": [
+    "timeline",
+    "gantt",
+    "calendar"
+  ],
   "categories": [
-    "Other", "Visualization"
+    "Other",
+    "Visualization"
   ],
   "activationEvents": [
     "onCustomEditor:markwhen.timeline",
     "onLanguage:markwhen"
   ],
   "main": "./out/extension.js",
+  "configurationDefaults": {
+    "markwhen": {
+      "editor.semanticHighlighting.enabled": true
+    }
+  },
   "contributes": {
     "customEditors": [
       {
@@ -32,24 +42,33 @@
         ]
       }
     ],
-    "languages": [{
-      "id": "markwhen",
-      "aliases": [
-        "mw", "Markwhen"
-      ],
-      "extensions": [
-        "*.mw"
-      ],
-      "icon": {
-        "dark": "./icons/icon.svg",
-        "light": "./icons/icon.svg"
+    "semanticTokenTypes": [],
+    "languages": [
+      {
+        "id": "markwhen",
+        "aliases": [
+          "Markwhen",
+          "mw"
+        ],
+        "extensions": [
+          ".mw"
+        ],
+        "icon": {
+          "dark": "./icons/icon.svg",
+          "light": "./icons/icon.svg"
+        },
+        "filenamePatterns": [
+          "*.mw"
+        ]
       }
-    }],
-    "iconThemes": [{
-      "id": "markwhen",
-      "label": "Markwhen",
-      "path": "./icons/markwhen-icon-theme.json"
-    }]
+    ],
+    "iconThemes": [
+      {
+        "id": "markwhen",
+        "label": "Markwhen",
+        "path": "./icons/markwhen-icon-theme.json"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -57,19 +76,25 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "link:parser": "yalc add @markwhen/parser && yalc link @markwhen/parser && npm install",
+    "unlink:parser": "yalc remove @markwhen/parser && npm install"
   },
   "devDependencies": {
-    "@types/vscode": "^1.69.0",
     "@types/glob": "^7.2.0",
+    "@types/luxon": "^3.0.0",
     "@types/mocha": "^9.1.1",
     "@types/node": "16.x",
+    "@types/vscode": "^1.69.0",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
+    "@vscode/test-electron": "^2.1.5",
     "eslint": "^8.20.0",
     "glob": "^8.0.3",
     "mocha": "^10.0.0",
-    "typescript": "^4.7.4",
-    "@vscode/test-electron": "^2.1.5"
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "@markwhen/parser": "file:.yalc/@markwhen/parser"
   }
 }
