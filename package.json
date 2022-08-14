@@ -2,7 +2,7 @@
   "name": "markwhen",
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "icon": "icons/markwhen.png",
   "engines": {
     "vscode": "^1.69.0"
@@ -95,6 +95,6 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@markwhen/parser": "file:.yalc/@markwhen/parser"
+    "@markwhen/parser": "^0.1.5"
   }
 }
