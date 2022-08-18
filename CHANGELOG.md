@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.1.1
+- Tags
+
 ## Sun Aug 14
 - Basic syntax highlighting
 - Support for pages

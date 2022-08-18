@@ -5,16 +5,19 @@ View markwhen documents.
 ## Features
 
 - Show timeline
-- Support for pages
-- Support for now line
+- Pages
+- Now line
+- Tags
 
 ## Known Issues
 
 - Unable to edit timline from the timeline view
-- Unable to filter by tags
 - Unable to expand events
 
 ## Release Notes
+
+## 0.1.1
+- Tags
 
 ### 0.1.0
 - Support for pages
