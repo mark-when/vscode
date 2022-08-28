@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.0
+- Editing from the timeline
+- Expand events
+
 ## 0.1.1
 - Tags
 

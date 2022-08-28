@@ -52,8 +52,8 @@ export class MarkwhenTimelineEditorProvider
 
     webviewPanel.webview.onDidReceiveMessage((e) => {
       switch (e.type) {
-        case "setTimelineString":
-          this.setDocument(document, e.value);
+        case "update":
+          this.setDocument(document, e.text);
       }
     });
 

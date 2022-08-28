@@ -5,16 +5,20 @@ View markwhen documents.
 ## Features
 
 - Show timeline
+- Edit from the timeline
 - Pages
 - Now line
 - Tags
 
 ## Known Issues
 
-- Unable to edit timline from the timeline view
-- Unable to expand events
+- Images and map don't work
 
 ## Release Notes
+
+## 0.2.0
+- Editing from the timeline
+- Expand events
 
 ## 0.1.1
 - Tags
