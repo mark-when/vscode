@@ -22,7 +22,8 @@
   ],
   "activationEvents": [
     "onCustomEditor:markwhen.timeline",
-    "onLanguage:markwhen"
+    "onLanguage:markwhen",
+    "onCommand:markwhen:openPreview"
   ],
   "main": "./out/extension.js",
   "configurationDefaults": {
@@ -31,6 +32,25 @@
     }
   },
   "contributes": {
+    "commands": [
+      {
+        "command": "markwhen.openPreview",
+        "title": "Open markwhen preview to the side",
+        "category": "Markwhen",
+        "icon": "$(open-preview)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [{
+        "command": "markwhen.openPreview",
+        "when": "editorLangId == markwhen"
+      }],
+      "editor/title": [{
+        "command": "markwhen.openPreview",
+        "when": "editorLangId == markwhen",
+        "group": "navigation"
+      }]
+    },
     "customEditors": [
       {
         "viewType": "markwhen.timeline",
@@ -39,7 +59,8 @@
           {
             "filenamePattern": "*.mw"
           }
-        ]
+        ],
+        "priority": "option"
       }
     ],
     "semanticTokenTypes": [],
@@ -60,13 +81,6 @@
         "filenamePatterns": [
           "*.mw"
         ]
-      }
-    ],
-    "iconThemes": [
-      {
-        "id": "markwhen",
-        "label": "Markwhen",
-        "path": "./icons/markwhen-icon-theme.json"
       }
     ]
   },

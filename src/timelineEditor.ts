@@ -1,11 +1,18 @@
 import * as vscode from "vscode";
+import { lpc } from "./lpc";
 
 export class MarkwhenTimelineEditorProvider
-  implements vscode.CustomTextEditorProvider
+  implements vscode.CustomTextEditorProvider, vscode.HoverProvider
 {
-  public static register(context: vscode.ExtensionContext): vscode.Disposable {
+  webviewPanel?: vscode.WebviewPanel;
+  lpc?: ReturnType<typeof lpc>;
+
+  public static register(context: vscode.ExtensionContext): {
+    providerRegistration: vscode.Disposable;
+    editor: MarkwhenTimelineEditorProvider;
+  } {
     const provider = new MarkwhenTimelineEditorProvider(context);
-    const providerRegisgration = vscode.window.registerCustomEditorProvider(
+    const providerRegistration = vscode.window.registerCustomEditorProvider(
       MarkwhenTimelineEditorProvider.viewType,
       provider,
       {
@@ -14,29 +21,50 @@ export class MarkwhenTimelineEditorProvider
         },
       }
     );
-    return providerRegisgration;
+    return { providerRegistration, editor: provider };
   }
 
   private static readonly viewType = "markwhen.timeline";
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
+  provideHover(
+    _document: vscode.TextDocument,
+    _position: vscode.Position,
+    _token: vscode.CancellationToken
+  ): vscode.ProviderResult<vscode.Hover> {
+    const commentCommandUri = vscode.Uri.parse(
+      `command:editor.action.addCommentLine`
+    );
+    const contents = new vscode.MarkdownString(
+      `[Add comment ${_position}](${commentCommandUri})`
+    );
+
+    // To enable command URIs in Markdown content, you must set the `isTrusted` flag.
+    // When creating trusted Markdown string, make sure to properly sanitize all the
+    // input content so that only expected command URIs can be executed
+    contents.isTrusted = true;
+
+    return new vscode.Hover(contents);
+  }
+
   public async resolveCustomTextEditor(
     document: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
     token: vscode.CancellationToken
   ): Promise<void> {
-    webviewPanel.webview.options = {
+    this.webviewPanel = webviewPanel;
+
+    this.webviewPanel.webview.options = {
       enableScripts: true,
     };
-    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+    this.webviewPanel.webview.html = this.getHtmlForWebview(
+      webviewPanel.webview
+    );
 
-    function updateWebview() {
-      webviewPanel.webview.postMessage({
-        type: "update",
-        text: document.getText(),
-      });
-    }
+    const updateWebview = () => {
+      this.lpc?.updateWebviewText(document.getText());
+    };
 
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(
       (e) => {
@@ -46,17 +74,15 @@ export class MarkwhenTimelineEditorProvider
       }
     );
 
-    webviewPanel.onDidDispose(() => {
+    this.webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
     });
 
-    webviewPanel.webview.onDidReceiveMessage((e) => {
-      switch (e.type) {
-        case "update":
-          this.setDocument(document, e.text);
-      }
-    });
+    const updateTextRequest = (text: string) => {
+      this.setDocument(document, text);
+    };
 
+    this.lpc = lpc(this.webviewPanel.webview, updateTextRequest);
     updateWebview();
   }
 
@@ -67,18 +93,6 @@ export class MarkwhenTimelineEditorProvider
     const cssUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.css")
     );
-
-    const getNonce = () => {
-      let text = "";
-      const possible =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-      for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-      }
-      return text;
-    };
-    ``;
-    const nonce = getNonce();
 
     return `<!DOCTYPE html>
     <html lang="en">
