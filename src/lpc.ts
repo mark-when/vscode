@@ -2,29 +2,45 @@ import { Webview } from "vscode";
 import { getNonce } from "./utilities/nonce";
 
 interface Message {
-  type: "hoverFromEditor" | "update";
+  type: "hoverFromEditor" | "update" | "scrollTo";
   request?: boolean;
   response?: boolean;
   id: string;
-  params?: any;
+  params?: unknown;
 }
 
+interface KnownMessage<Params> extends Message {
+  params?: Params;
+}
+
+type HoverResponse = KnownMessage<{
+  range: {
+    from: number;
+    to: number;
+  };
+  path: any;
+}>;
+
 export const lpc = (webview: Webview, updateText: (text: string) => void) => {
-  const calls: Map<string, (a: any, b?: any) => void> = new Map();
+  const calls: Map<
+    string,
+    {
+      resolve: (a: any) => void;
+      reject: (a: any) => void;
+    }
+  > = new Map();
 
-  const postRequest = (type: Message["type"], params: any) => {
+  const postRequest = <T>(type: KnownMessage<T>["type"], params: any) => {
     const id = getNonce();
-
-    const callback = (resolve: any) => resolve;
-    const result = new Promise(callback);
-    calls.set(id, callback);
-    post({
-      type,
-      request: true,
-      id,
-      params,
+    return new Promise<T>((resolve, reject) => {
+      calls.set(id, { resolve, reject });
+      post({
+        type,
+        request: true,
+        id,
+        params,
+      });
     });
-    return result;
   };
 
   const postResponse = (type: Message["type"], id: string, params?: any) =>
@@ -32,28 +48,32 @@ export const lpc = (webview: Webview, updateText: (text: string) => void) => {
 
   const post = (message: Message) => webview.postMessage(message);
 
-  const hoverFromEditor = (index: number) =>
-    postRequest("hoverFromEditor", { index });
-
-  const updateWebviewText = (text: string) => postRequest("update", { text });
-
   webview.onDidReceiveMessage((e) => {
+    console.log(e);
     if (!e.id) {
       throw new Error("No id");
     }
     if (e.response) {
-      calls.get(e.id)?.(e.response);
+      calls.get(e.id)?.resolve(e);
       calls.delete(e.id);
     } else if (e.request) {
-      switch (e.type) {
+      switch (e.type as Message["type"]) {
         case "update":
           updateText(e.params.text);
           postResponse("update", e.id);
+          break;
       }
     } else {
       throw new Error("Not a request or response");
     }
   });
 
-  return { hoverFromEditor, updateWebviewText };
+  const hoverFromEditor = (index: number) =>
+    postRequest<HoverResponse>("hoverFromEditor", { index });
+
+  const updateWebviewText = (text: string) => postRequest("update", { text });
+
+  const scrollTo = (path: any) => postRequest("scrollTo", { path });
+
+  return { hoverFromEditor, updateWebviewText, scrollTo };
 };

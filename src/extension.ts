@@ -1,12 +1,15 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { MarkwhenTimelineEditorProvider } from "./timelineEditor";
+import {
+  MarkwhenTimelineEditorProvider,
+  webviewPanels,
+} from "./timelineEditor";
 import "./semanticTokenProvider";
 import { legend, provider } from "./semanticTokenProvider";
-import { Hover } from "./hover";
 
 const command_preview = "markwhen.openPreview";
+const command_viewInTimeline = "markwhen.viewInTimeline";
 
 export function activate(context: vscode.ExtensionContext) {
   const { providerRegistration, editor } =
@@ -35,7 +38,22 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     providerRegistration,
-    vscode.commands.registerCommand(command_preview, previewHandler)
+    vscode.commands.registerCommand(command_preview, previewHandler),
+    vscode.commands.registerCommand(command_viewInTimeline, async (arg) => {
+      if (!webviewPanels.length) {
+        const active = vscode.window.activeTextEditor;
+        if (!active) {
+          return;
+        }
+        await vscode.commands.executeCommand(
+          "vscode.openWith",
+          active.document.uri,
+          "markwhen.timeline",
+          vscode.ViewColumn.Beside
+        );
+      }
+      editor.viewInTimeline(arg);
+    })
   );
 }
 

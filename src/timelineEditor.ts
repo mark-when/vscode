@@ -1,12 +1,17 @@
 import * as vscode from "vscode";
 import { lpc } from "./lpc";
+import { getNonce } from "./utilities/nonce";
+
+export let webviewPanels = [] as vscode.WebviewPanel[];
+export let localProcedureCall: ReturnType<typeof lpc> | undefined;
+
+const getPanel = () => {
+  return webviewPanels[webviewPanels.length - 1];
+};
 
 export class MarkwhenTimelineEditorProvider
   implements vscode.CustomTextEditorProvider, vscode.HoverProvider
 {
-  webviewPanel?: vscode.WebviewPanel;
-  lpc?: ReturnType<typeof lpc>;
-
   public static register(context: vscode.ExtensionContext): {
     providerRegistration: vscode.Disposable;
     editor: MarkwhenTimelineEditorProvider;
@@ -28,24 +33,39 @@ export class MarkwhenTimelineEditorProvider
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
-  provideHover(
-    _document: vscode.TextDocument,
-    _position: vscode.Position,
-    _token: vscode.CancellationToken
-  ): vscode.ProviderResult<vscode.Hover> {
-    const commentCommandUri = vscode.Uri.parse(
-      `command:editor.action.addCommentLine`
+  async provideHover(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken
+  ): Promise<vscode.Hover | null> {
+    const resp = await localProcedureCall?.hoverFromEditor(
+      document.offsetAt(position)
     );
-    const contents = new vscode.MarkdownString(
-      `[Add comment ${_position}](${commentCommandUri})`
+    if (!resp || !resp.params) {
+      return null;
+    }
+    const viewInTimelineCommandUri = vscode.Uri.parse(
+      `command:markwhen.viewInTimeline?${encodeURIComponent(
+        JSON.stringify(resp.params)
+      )}`
     );
-
+    const view = new vscode.MarkdownString(
+      `[View in timeline](${viewInTimelineCommandUri})`
+    );
     // To enable command URIs in Markdown content, you must set the `isTrusted` flag.
     // When creating trusted Markdown string, make sure to properly sanitize all the
     // input content so that only expected command URIs can be executed
-    contents.isTrusted = true;
+    view.isTrusted = true;
 
-    return new vscode.Hover(contents);
+    const rangeFrom = document.positionAt(resp.params.range.from);
+    const rangeTo = document.positionAt(resp.params.range.to);
+
+    return new vscode.Hover(view, new vscode.Range(rangeFrom, rangeTo));
+  }
+
+  public viewInTimeline(...args: any[]) {
+    const path = args[0].path;
+    localProcedureCall?.scrollTo(path);
   }
 
   public async resolveCustomTextEditor(
@@ -53,17 +73,15 @@ export class MarkwhenTimelineEditorProvider
     webviewPanel: vscode.WebviewPanel,
     token: vscode.CancellationToken
   ): Promise<void> {
-    this.webviewPanel = webviewPanel;
+    webviewPanels.push(webviewPanel);
 
-    this.webviewPanel.webview.options = {
+    getPanel().webview.options = {
       enableScripts: true,
     };
-    this.webviewPanel.webview.html = this.getHtmlForWebview(
-      webviewPanel.webview
-    );
+    getPanel().webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
     const updateWebview = () => {
-      this.lpc?.updateWebviewText(document.getText());
+      localProcedureCall?.updateWebviewText(document.getText());
     };
 
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(
@@ -74,7 +92,7 @@ export class MarkwhenTimelineEditorProvider
       }
     );
 
-    this.webviewPanel.onDidDispose(() => {
+    getPanel().onDidDispose(() => {
       changeDocumentSubscription.dispose();
     });
 
@@ -82,7 +100,7 @@ export class MarkwhenTimelineEditorProvider
       this.setDocument(document, text);
     };
 
-    this.lpc = lpc(this.webviewPanel.webview, updateTextRequest);
+    localProcedureCall = lpc(getPanel().webview, updateTextRequest);
     updateWebview();
   }
 
@@ -93,7 +111,7 @@ export class MarkwhenTimelineEditorProvider
     const cssUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.css")
     );
-
+    const nonce = getNonce();
     return `<!DOCTYPE html>
     <html lang="en">
       <head>

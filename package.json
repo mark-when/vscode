@@ -38,18 +38,28 @@
         "title": "Open markwhen preview to the side",
         "category": "Markwhen",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "markwhen.viewInTimeline",
+        "title": "View event in timeline",
+        "category": "Markwhen",
+        "icon": "$(arrow-right)"
       }
     ],
     "menus": {
-      "commandPalette": [{
-        "command": "markwhen.openPreview",
-        "when": "editorLangId == markwhen"
-      }],
-      "editor/title": [{
-        "command": "markwhen.openPreview",
-        "when": "editorLangId == markwhen",
-        "group": "navigation"
-      }]
+      "commandPalette": [
+        {
+          "command": "markwhen.openPreview",
+          "when": "editorLangId == markwhen"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "markwhen.openPreview",
+          "when": "editorLangId == markwhen",
+          "group": "navigation"
+        }
+      ]
     },
     "customEditors": [
       {
