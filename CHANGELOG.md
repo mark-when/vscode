@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.3.1
+Fix bug where changes made from the timeline view wouldn't reflect in the text editor
+
 ## 0.3.0
 - Updated UI to match markwhen.com
 - Markdown-like preview button

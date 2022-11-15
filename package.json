@@ -2,7 +2,7 @@
   "name": "markwhen",
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "icon": "icons/markwhen.png",
   "engines": {
     "vscode": "^1.69.0"
@@ -23,7 +23,8 @@
   "activationEvents": [
     "onCustomEditor:markwhen.timeline",
     "onLanguage:markwhen",
-    "onCommand:markwhen:openPreview"
+    "onCommand:markwhen.openPreview",
+    "onCommand:markwhen.viewInTimeline"
   ],
   "main": "./out/extension.js",
   "configurationDefaults": {
