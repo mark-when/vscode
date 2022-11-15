@@ -16,6 +16,11 @@ View markwhen documents.
 
 ## Release Notes
 
+## 0.3.0
+- Updated UI to match markwhen.com
+- Markdown-like preview button
+- Basic scroll-to (only works on single page documents or on the first page of multi-page documents)
+
 ## 0.2.0
 - Editing from the timeline
 - Expand events

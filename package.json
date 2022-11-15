@@ -2,7 +2,7 @@
   "name": "markwhen",
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "icon": "icons/markwhen.png",
   "engines": {
     "vscode": "^1.69.0"
