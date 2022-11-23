@@ -1,3 +1,4 @@
+import { Foldable, parse } from "@markwhen/parser";
 import * as vscode from "vscode";
 import { lpc } from "./lpc";
 import { getNonce } from "./utilities/nonce";
@@ -10,7 +11,10 @@ const getPanel = () => {
 };
 
 export class MarkwhenTimelineEditorProvider
-  implements vscode.CustomTextEditorProvider, vscode.HoverProvider
+  implements
+    vscode.CustomTextEditorProvider,
+    vscode.HoverProvider,
+    vscode.FoldingRangeProvider
 {
   public static register(context: vscode.ExtensionContext): {
     providerRegistration: vscode.Disposable;
@@ -32,6 +36,32 @@ export class MarkwhenTimelineEditorProvider
   private static readonly viewType = "markwhen.timeline";
 
   constructor(private readonly context: vscode.ExtensionContext) {}
+
+  provideFoldingRanges(
+    document: vscode.TextDocument,
+    context: vscode.FoldingContext,
+    token: vscode.CancellationToken
+  ): vscode.ProviderResult<vscode.FoldingRange[]> {
+    const mw = parse(document.getText());
+    const ranges = [] as vscode.FoldingRange[];
+    for (const timeline of mw.timelines) {
+      const indices = Object.keys(timeline.foldables);
+      for (const index of indices) {
+        // @ts-ignore
+        const foldable = timeline.foldables[index] as Foldable;
+        ranges.push(
+          new vscode.FoldingRange(
+            foldable.startLine,
+            document.positionAt(foldable.endIndex).line,
+            foldable.type === "section"
+              ? vscode.FoldingRangeKind.Region
+              : vscode.FoldingRangeKind.Comment
+          )
+        );
+      }
+    }
+    return ranges;
+  }
 
   async provideHover(
     document: vscode.TextDocument,

@@ -22,6 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   vscode.languages.registerHoverProvider("markwhen", editor);
+  vscode.languages.registerFoldingRangeProvider("markwhen", editor);
 
   const previewHandler = () => {
     const active = vscode.window.activeTextEditor;

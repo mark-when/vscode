@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.0
+- Support for nesting groups and sections
+- Support for code folding (groups/sections/comments)
+
 ## 0.3.1
 Fix bug where changes made from the timeline view wouldn't reflect in the text editor
 
