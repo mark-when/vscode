@@ -3,6 +3,10 @@
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mark-when/markwhen"
+  },
   "icon": "icons/markwhen.png",
   "engines": {
     "vscode": "^1.69.0"
