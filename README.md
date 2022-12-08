@@ -1,20 +1,26 @@
 # Markwhen
 
-View markwhen documents.
+View and edit markwhen documents.
+
+![](https://blog.markwhen.com/images/calendar2.png)
+![](https://blog.markwhen.com/images/calendar_comp2.png)
+![](https://blog.markwhen.com/images/calendar_comp3.png)
 
 ## Features
 
-- Show timeline
+- Calendar view
+- Map view
+- Timeline View
 - Edit from the timeline
 - Pages
 - Now line
 - Tags
 
-## Known Issues
-
-- Images and map don't work
-
 ## Release Notes
+
+# 1.1
+
+- Calendar and map views
 
 ## 1.0.1
 

@@ -151,7 +151,7 @@ export class MarkwhenTimelineEditorProvider
         <title>Markwhen</title>
 				<meta 
           http-equiv="Content-Security-Policy" 
-          content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';"
+          content="default-src https://*.markwhen.com; img-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';"
         >
 
         <script type="module" crossorigin src="${scriptUri}" nonce="${nonce}"></script>

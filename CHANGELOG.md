@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1
+
+- Calendar and map views
+
 ## 1.0.1
 
 - Support for markdown-style images (`![](example.com/image.jpg)`)
