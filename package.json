@@ -2,7 +2,7 @@
   "name": "markwhen",
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
-  "version": "1.1",
+  "version": "1.1.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mark-when/markwhen"
