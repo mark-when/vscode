@@ -18,6 +18,10 @@ View and edit markwhen documents.
 
 ## Release Notes
 
+## 1.1.1
+
+- Hosted visualizations require approval to load
+
 # 1.1
 
 - Calendar and map views
