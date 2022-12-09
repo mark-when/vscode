@@ -130,7 +130,25 @@ export class MarkwhenTimelineEditorProvider
       this.setDocument(document, text);
     };
 
-    localProcedureCall = lpc(getPanel().webview, updateTextRequest);
+    const allowSource = async (src?: string) => {
+      const alreadyAllowed =
+        (this.context.globalState.get("allowedSources") as
+          | string[]
+          | undefined) || [];
+      if (!src) {
+        localProcedureCall?.allowedSources(alreadyAllowed);
+      } else {
+        const newSet = Array.from(new Set([src, ...alreadyAllowed]));
+        await this.context.globalState.update("allowedSources", newSet);
+        localProcedureCall?.allowedSources(newSet);
+      }
+    };
+
+    localProcedureCall = lpc(
+      getPanel().webview,
+      updateTextRequest,
+      allowSource
+    );
     updateWebview();
   }
 

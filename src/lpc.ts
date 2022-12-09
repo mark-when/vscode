@@ -2,7 +2,7 @@ import { Webview } from "vscode";
 import { getNonce } from "./utilities/nonce";
 
 interface Message {
-  type: "hoverFromEditor" | "update" | "scrollTo";
+  type: "hoverFromEditor" | "update" | "scrollTo" | "canUseSource";
   request?: boolean;
   response?: boolean;
   id: string;
@@ -21,7 +21,11 @@ type HoverResponse = KnownMessage<{
   path: any;
 }>;
 
-export const lpc = (webview: Webview, updateText: (text: string) => void) => {
+export const lpc = (
+  webview: Webview,
+  updateText: (text: string) => void,
+  allowedSource: (src: string) => void
+) => {
   const calls: Map<
     string,
     {
@@ -49,7 +53,6 @@ export const lpc = (webview: Webview, updateText: (text: string) => void) => {
   const post = (message: Message) => webview.postMessage(message);
 
   webview.onDidReceiveMessage((e) => {
-    console.log(e);
     if (!e.id) {
       throw new Error("No id");
     }
@@ -61,6 +64,9 @@ export const lpc = (webview: Webview, updateText: (text: string) => void) => {
         case "update":
           updateText(e.params.text);
           postResponse("update", e.id);
+          break;
+        case "canUseSource":
+          allowedSource(e.params.source);
           break;
       }
     } else {
@@ -74,6 +80,8 @@ export const lpc = (webview: Webview, updateText: (text: string) => void) => {
   const updateWebviewText = (text: string) => postRequest("update", { text });
 
   const scrollTo = (path: any) => postRequest("scrollTo", { path });
+  const allowedSources = (sources: string[]) =>
+    postRequest("canUseSource", { sources });
 
-  return { hoverFromEditor, updateWebviewText, scrollTo };
+  return { hoverFromEditor, updateWebviewText, scrollTo, allowedSources };
 };
