@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.2
+- Gantt view
+- Auto center viewport button
+
 ## 1.1.1
 
 - Hosted visualizations require approval to load

@@ -10,6 +10,7 @@ View and edit markwhen documents.
 
 - Calendar view
 - Map view
+- Gantt view
 - Timeline View
 - Edit from the timeline
 - Pages
@@ -17,6 +18,10 @@ View and edit markwhen documents.
 - Tags
 
 ## Release Notes
+
+## 1.2
+- Gantt view
+- Auto center viewport button
 
 ## 1.1.1
 
