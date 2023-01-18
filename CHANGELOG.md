@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.0
+- Support for ecurring events
+
 ## 1.2
 - Gantt view
 - Auto center viewport button

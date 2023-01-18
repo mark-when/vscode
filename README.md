@@ -2,6 +2,8 @@
 
 View and edit markwhen documents.
 
+Read the markwhen documentation [here](https://docs.markwhen.com).
+
 ![](https://blog.markwhen.com/images/calendar2.png)
 ![](https://blog.markwhen.com/images/calendar_comp2.png)
 ![](https://blog.markwhen.com/images/calendar_comp3.png)
@@ -18,6 +20,9 @@ View and edit markwhen documents.
 - Tags
 
 ## Release Notes
+
+## 1.3.0
+- Recurring events
 
 ## 1.2
 - Gantt view
