@@ -11,6 +11,7 @@ const tokenTypes = [
   "property",
   "keyword",
   "type",
+  "class"
 ];
 export const legend = new vscode.SemanticTokensLegend(tokenTypes, []);
 
@@ -43,6 +44,8 @@ export const provider: vscode.DocumentSemanticTokensProvider = {
             break;
           case RangeType.Tag:
             tokensBuilder.push(vscodeRange, "property");
+          case RangeType.Recurrence:
+            tokensBuilder.push(vscodeRange, "class")
           default:
             tokensBuilder.push(vscodeRange, "string")
         }

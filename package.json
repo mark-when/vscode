@@ -2,7 +2,7 @@
   "name": "markwhen",
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
-  "version": "1.2",
+  "version": "1.3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mark-when/markwhen"
@@ -125,7 +125,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@markwhen/parser": "^0.1.29",
+    "@markwhen/parser": "^0.4.9",
     "vscode-languageclient": "^8.0.2"
   }
 }
