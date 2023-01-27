@@ -2,7 +2,12 @@ import { Webview } from "vscode";
 import { getNonce } from "./utilities/nonce";
 
 interface Message {
-  type: "hoverFromEditor" | "update" | "scrollTo" | "canUseSource";
+  type:
+    | "hoverFromEditor"
+    | "update"
+    | "scrollTo"
+    | "canUseSource"
+    | "showInEditor";
   request?: boolean;
   response?: boolean;
   id: string;
@@ -24,7 +29,8 @@ type HoverResponse = KnownMessage<{
 export const lpc = (
   webview: Webview,
   updateText: (text: string) => void,
-  allowedSource: (src: string) => void
+  allowedSource: (src: string) => void,
+  showInEditor: (location: number) => void
 ) => {
   const calls: Map<
     string,
@@ -68,6 +74,8 @@ export const lpc = (
         case "canUseSource":
           allowedSource(e.params.source);
           break;
+        case "showInEditor":
+          showInEditor(e.params.location);
       }
     } else {
       throw new Error("Not a request or response");

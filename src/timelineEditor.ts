@@ -144,10 +144,21 @@ export class MarkwhenTimelineEditorProvider
       }
     };
 
+    const showInEditor = (location: number) => {
+      const activeTextEditor = vscode.window.activeTextEditor;
+      if (activeTextEditor) {
+        const position = activeTextEditor.document.positionAt(location);
+        activeTextEditor.selections = [
+          new vscode.Selection(position, position),
+        ];
+      }
+    };
+
     localProcedureCall = lpc(
       getPanel().webview,
       updateTextRequest,
-      allowSource
+      allowSource,
+      showInEditor
     );
     updateWebview();
   }
