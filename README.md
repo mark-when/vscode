@@ -21,6 +21,11 @@ Read the markwhen documentation [here](https://docs.markwhen.com).
 
 ## Release Notes
 
+## 1.3.1
+- Expand/collapse all groups/sections
+- Timeline view show in editor button now works (moves the cursor to the start of the event)
+
+
 ## 1.3.0
 - Recurring events
 

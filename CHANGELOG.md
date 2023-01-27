@@ -1,7 +1,11 @@
 # Change Log
 
+## 1.3.1
+- Expand/collapse all groups/sections
+- Timeline view show in editor button now works (moves the cursor to the start of the event)
+
 ## 1.3.0
-- Support for ecurring events
+- Support for recurring events
 
 ## 1.2
 - Gantt view
