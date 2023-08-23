@@ -1,7 +1,7 @@
-import { Foldable, parse } from "@markwhen/parser";
-import * as vscode from "vscode";
+import { TextDecoder } from "util";
+import vscode from "vscode";
 import { lpc } from "./lpc";
-import { getNonce } from "./utilities/nonce";
+import { parse as parseHtml } from "node-html-parser";
 
 export let webviewPanels = [] as vscode.WebviewPanel[];
 export let localProcedureCall: ReturnType<typeof lpc> | undefined;
@@ -37,12 +37,12 @@ export class MarkwhenTimelineEditorProvider
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
-  provideFoldingRanges(
+  async provideFoldingRanges(
     document: vscode.TextDocument,
     context: vscode.FoldingContext,
     token: vscode.CancellationToken
-  ): vscode.ProviderResult<vscode.FoldingRange[]> {
-    const mw = parse(document.getText());
+  ): Promise<vscode.FoldingRange[]> {
+    const mw = (await import("@markwhen/parser")).parse(document.getText());
     const ranges = [] as vscode.FoldingRange[];
     for (const timeline of mw.timelines) {
       const indices = Object.keys(timeline.foldables);
@@ -108,7 +108,9 @@ export class MarkwhenTimelineEditorProvider
     getPanel().webview.options = {
       enableScripts: true,
     };
-    getPanel().webview.html = this.getHtmlForWebview(webviewPanel.webview);
+    getPanel().webview.html = await this.getHtmlForWebview(
+      webviewPanel.webview
+    );
 
     const updateWebview = () => {
       localProcedureCall?.updateWebviewText(document.getText());
@@ -163,34 +165,54 @@ export class MarkwhenTimelineEditorProvider
     updateWebview();
   }
 
-  private getHtmlForWebview(webview: vscode.Webview): string {
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.js")
+  private async getHtmlForWebview(webview: vscode.Webview): Promise<string> {
+    // const scriptUri = webview.asWebviewUri(
+    //   vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.js")
+    // );
+    // const cssUri = webview.asWebviewUri(
+    //   vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.css")
+    // );
+    const p = vscode.Uri.joinPath(
+      vscode.Uri.file(this.context.asAbsolutePath("assets/views/timeline.html"))
     );
-    const cssUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.css")
-    );
-    const nonce = getNonce();
-    return `<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <link rel="icon" href="/favicon.ico" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Markwhen</title>
-				<meta 
-          http-equiv="Content-Security-Policy" 
-          content="default-src https://*.markwhen.com; img-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';"
-        >
 
-        <script type="module" crossorigin src="${scriptUri}" nonce="${nonce}"></script>
-        <link rel="stylesheet" href="${cssUri}">
-      </head>
-      <body>
-        <div id="app" style="height: 100%"></div>
-      </body>
-    </html>
-    `;
+    const uriPath = vscode.Uri.joinPath(
+      this.context.extensionUri,
+      "assets",
+      "views",
+      "timeline.html"
+    );
+    console.log("uriPath", uriPath);
+    const baseAssetsPath = webview.asWebviewUri(uriPath);
+    console.log("baseAssetsPath", baseAssetsPath);
+    const a = await vscode.workspace.fs.readFile(p).then((v) => {
+      const td = new TextDecoder();
+      const s = td.decode(v);
+      return s;
+    });
+    // console.log(a.substring(0, 200));
+    // const nonce = getNonce();
+    const html = injectScript(
+      a,
+      `var __markwhen_wss_url = "ws://localhost:7237";`
+    );
+    return html;
+    // return `<!DOCTYPE html>
+    // <html lang="en" style="height:100%; width: 100%">
+    //   <head>
+    //     <meta charset="UTF-8" />
+    //     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    //     <title>Markwhen</title>
+    // 		<link rel="" href="${baseAssetsPath}">
+    //     <script nonce=${nonce}>var __baseAssetsPath = "${p.toString(
+    //   true
+    // )}"</script>
+    //   </head>
+    //   <body style="height:100%; width: 100%">
+    //     <iframe style="border: 0; height: 100%; width: 100%; margin: 0, padding: 0" src="${baseAssetsPath}">
+    //   </body>
+    // </html>
+    // `;
   }
 
   private setDocument(document: vscode.TextDocument, timelineString: string) {
@@ -202,4 +224,12 @@ export class MarkwhenTimelineEditorProvider
     );
     return vscode.workspace.applyEdit(edit);
   }
+}
+
+function injectScript(domString: string, jsToInject: string) {
+  const html = parseHtml(domString);
+  const script = `<script>${jsToInject}</script>`;
+  const head = html.getElementsByTagName("head")[0];
+  head.innerHTML = script + head.innerHTML;
+  return html.toString();
 }

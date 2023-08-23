@@ -1,5 +1,8 @@
 import { Webview } from "vscode";
 import { getNonce } from "./utilities/nonce";
+import WebSocket, { WebSocketServer } from "ws";
+
+export const wsPort = 7237;
 
 interface Message {
   type:
@@ -53,12 +56,24 @@ export const lpc = (
     });
   };
 
+  let ws: WebSocket | undefined;
+  const wss = new WebSocketServer({ port: wsPort });
+  wss.on("connection", (webSocket) => {
+    ws = webSocket;
+    ws.onmessage = (event) => {
+      messageListener({
+        // @ts-ignore
+        data: JSON.parse(event.data),
+      });
+    };
+  });
+
   const postResponse = (type: Message["type"], id: string, params?: any) =>
     post({ type, response: true, id, params });
 
-  const post = (message: Message) => webview.postMessage(message);
+  const post = (message: Message) => ws?.send(JSON.stringify(message));
 
-  webview.onDidReceiveMessage((e) => {
+  const messageListener = (e: any) => {
     if (!e.id) {
       throw new Error("No id");
     }
@@ -80,7 +95,7 @@ export const lpc = (
     } else {
       throw new Error("Not a request or response");
     }
-  });
+  };
 
   const hoverFromEditor = (index: number) =>
     postRequest<HoverResponse>("hoverFromEditor", { index });
