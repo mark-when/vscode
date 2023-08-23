@@ -101,21 +101,23 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && node build.js",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
     "link:parser": "yalc add @markwhen/parser && yalc link @markwhen/parser && npm install",
     "unlink:parser": "yalc remove @markwhen/parser && npm install",
-    "deploy": "vsce publish"
+    "deploy": "vsce publish",
+    "copyViews": ""
   },
   "devDependencies": {
-    "@types/glob": "^7.2.0",
-    "@types/luxon": "^3.0.0",
-    "@types/mocha": "^9.1.1",
-    "@types/node": "16.x",
-    "@types/vscode": "^1.69.0",
+    "@types/glob": "^8.1.0",
+    "@types/luxon": "^3.3.1",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^16.18.43",
+    "@types/vscode": "^1.81.0",
+    "@types/ws": "^8.5.5",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
     "@vscode/test-electron": "^2.1.5",
@@ -125,7 +127,11 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@markwhen/parser": "^0.4.9",
-    "vscode-languageclient": "^8.0.2"
+    "@markwhen/calendar": "^1.3.1",
+    "@markwhen/parser": "^0.9.7",
+    "@markwhen/timeline": "^1.2.0",
+    "node-html-parser": "^6.1.6",
+    "vscode-languageclient": "^8.0.2",
+    "ws": "^8.13.0"
   }
 }
