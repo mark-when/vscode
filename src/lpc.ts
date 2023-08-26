@@ -1,40 +1,71 @@
-import { Webview } from "vscode";
 import { getNonce } from "./utilities/nonce";
+import { Webview } from "vscode";
 import WebSocket, { WebSocketServer } from "ws";
 
-export const wsPort = 7237;
+export type ColorMap = Record<string, Record<string, string>>;
+export type EventPath = number[];
 
-interface Message {
-  type:
-    | "hoverFromEditor"
-    | "update"
-    | "scrollTo"
-    | "canUseSource"
-    | "showInEditor";
+export interface AppState {
+  isDark?: boolean;
+  hoveringPath?: EventPath;
+  detailPath?: EventPath;
+  colorMap: ColorMap;
+}
+export interface MarkwhenState {
+  rawText?: string;
+  parsed: any[];
+  transformed?: any;
+}
+type DateRangeIso = { fromDateTimeIso: string; toDateTimeIso: string };
+export interface MessageTypes {
+  appState: AppState;
+  markwhenState: MarkwhenState;
+  setHoveringPath: EventPath;
+  setDetailPath: EventPath;
+  key: string;
+  showInEditor: EventPath;
+  newEvent: {
+    dateRangeIso: DateRangeIso;
+    granularity?: unknown;
+    immediate: boolean;
+  };
+  editEventDateRange: {
+    path: EventPath;
+    range: DateRangeIso;
+    scale: unknown;
+    preferredInterpolationFormat: string | undefined;
+  };
+  jumpToPath: {
+    path: EventPath;
+  };
+  jumpToRange: {
+    dateRangeIso: { fromDateTimeIso: string; toDateTimeIso: string };
+  };
+}
+
+export type MessageType<ViewSpecificMessageTypes> = keyof (MessageTypes &
+  ViewSpecificMessageTypes);
+export type MessageParam<VSMT, T extends MessageType<VSMT>> = (MessageTypes &
+  VSMT)[T];
+
+export interface Message<VSMT, T extends MessageType<VSMT>> {
+  type: T;
   request?: boolean;
   response?: boolean;
   id: string;
-  params?: unknown;
+  params?: MessageParam<VSMT, T>;
 }
 
-interface KnownMessage<Params> extends Message {
-  params?: Params;
-}
+export type MessageListeners<VSMT> = {
+  [Property in MessageType<VSMT>]?: (
+    event: (MessageTypes & VSMT)[Property]
+  ) => any;
+};
 
-type HoverResponse = KnownMessage<{
-  range: {
-    from: number;
-    to: number;
-  };
-  path: any;
-}>;
-
-export const lpc = (
+export function useLpc<ViewSpecificMessageTypes = {}>(
   webview: Webview,
-  updateText: (text: string) => void,
-  allowedSource: (src: string) => void,
-  showInEditor: (location: number) => void
-) => {
+  listeners: MessageListeners<ViewSpecificMessageTypes>
+) {
   const calls: Map<
     string,
     {
@@ -43,8 +74,11 @@ export const lpc = (
     }
   > = new Map();
 
-  const postRequest = <T>(type: KnownMessage<T>["type"], params: any) => {
-    const id = getNonce();
+  const postRequest = <T extends MessageType<ViewSpecificMessageTypes>>(
+    type: T,
+    params: any
+  ) => {
+    const id = `markwhen_${getNonce()}`;
     return new Promise<T>((resolve, reject) => {
       calls.set(id, { resolve, reject });
       post({
@@ -56,55 +90,37 @@ export const lpc = (
     });
   };
 
-  let ws: WebSocket | undefined;
-  const wss = new WebSocketServer({ port: wsPort });
-  wss.on("connection", (webSocket) => {
-    ws = webSocket;
-    ws.onmessage = (event) => {
-      messageListener({
-        // @ts-ignore
-        data: JSON.parse(event.data),
-      });
-    };
-  });
-
-  const postResponse = (type: Message["type"], id: string, params?: any) =>
-    post({ type, response: true, id, params });
-
-  const post = (message: Message) => ws?.send(JSON.stringify(message));
+  const postResponse = <T extends MessageType<ViewSpecificMessageTypes>>(
+    id: string,
+    type: T,
+    params: MessageParam<ViewSpecificMessageTypes, T>
+  ) => post({ type, response: true, id, params });
+  const post = <T extends MessageType<ViewSpecificMessageTypes>>(
+    message: Message<ViewSpecificMessageTypes, T>
+  ) => {
+    webview.postMessage(message);
+  };
 
   const messageListener = (e: any) => {
     if (!e.id) {
-      throw new Error("No id");
+      return;
     }
-    if (e.response) {
+    const { request, response, type, params } = e;
+    if (response) {
       calls.get(e.id)?.resolve(e);
       calls.delete(e.id);
-    } else if (e.request) {
-      switch (e.type as Message["type"]) {
-        case "update":
-          updateText(e.params.text);
-          postResponse("update", e.id);
-          break;
-        case "canUseSource":
-          allowedSource(e.params.source);
-          break;
-        case "showInEditor":
-          showInEditor(e.params.location);
-      }
+    } else if (request) {
+      // @ts-ignore
+      const result = listeners?.[type]?.(params!);
+      Promise.resolve(result).then((resp) => {
+        if (typeof resp !== "undefined") {
+          postResponse(e.id, type, resp);
+        }
+      });
     } else {
       throw new Error("Not a request or response");
     }
   };
-
-  const hoverFromEditor = (index: number) =>
-    postRequest<HoverResponse>("hoverFromEditor", { index });
-
-  const updateWebviewText = (text: string) => postRequest("update", { text });
-
-  const scrollTo = (path: any) => postRequest("scrollTo", { path });
-  const allowedSources = (sources: string[]) =>
-    postRequest("canUseSource", { sources });
-
-  return { hoverFromEditor, updateWebviewText, scrollTo, allowedSources };
-};
+  webview.onDidReceiveMessage(messageListener);
+  return { postRequest, post };
+}

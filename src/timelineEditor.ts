@@ -1,13 +1,22 @@
 import { TextDecoder } from "util";
 import vscode from "vscode";
-import { lpc } from "./lpc";
-import { parse as parseHtml } from "node-html-parser";
+import { AppState, MessageListeners, useLpc } from "./lpc";
+import { Server } from "http";
+import { useColors } from "./utilities/colorMap";
 
 export let webviewPanels = [] as vscode.WebviewPanel[];
-export let localProcedureCall: ReturnType<typeof lpc> | undefined;
 
 const getPanel = () => {
   return webviewPanels[webviewPanels.length - 1];
+};
+
+let cachedParser: any;
+const mwParser = async () => {
+  if (cachedParser) {
+    return cachedParser;
+  }
+  cachedParser = await import("@markwhen/parser");
+  return cachedParser;
 };
 
 export class MarkwhenTimelineEditorProvider
@@ -16,6 +25,19 @@ export class MarkwhenTimelineEditorProvider
     vscode.HoverProvider,
     vscode.FoldingRangeProvider
 {
+  document?: vscode.TextDocument;
+  lpc?: ReturnType<typeof useLpc>;
+  parseResult?: {
+    markwhenState: {
+      rawText: string;
+      parsed: any[];
+      transformed: any;
+    };
+    appState: {
+      colorMap: Record<string, Record<string, string>>;
+    };
+  };
+
   public static register(context: vscode.ExtensionContext): {
     providerRegistration: vscode.Disposable;
     editor: MarkwhenTimelineEditorProvider;
@@ -42,7 +64,7 @@ export class MarkwhenTimelineEditorProvider
     context: vscode.FoldingContext,
     token: vscode.CancellationToken
   ): Promise<vscode.FoldingRange[]> {
-    const mw = (await import("@markwhen/parser")).parse(document.getText());
+    const mw = (await mwParser()).parse(document.getText());
     const ranges = [] as vscode.FoldingRange[];
     for (const timeline of mw.timelines) {
       const indices = Object.keys(timeline.foldables);
@@ -68,9 +90,9 @@ export class MarkwhenTimelineEditorProvider
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
-    const resp = await localProcedureCall?.hoverFromEditor(
-      document.offsetAt(position)
-    );
+    const resp = null; //await localProcedureCall?.hoverFromEditor(
+    //document.offsetAt(position)
+    //);
     if (!resp || !resp.params) {
       return null;
     }
@@ -95,7 +117,35 @@ export class MarkwhenTimelineEditorProvider
 
   public viewInTimeline(...args: any[]) {
     const path = args[0].path;
-    localProcedureCall?.scrollTo(path);
+    this.lpc?.postRequest("jumpToPath", path);
+  }
+
+  onDocumentChange(event: vscode.TextDocumentChangeEvent) {
+    if (event.document.uri.toString() === this.document?.uri.toString()) {
+      this.updateWebview();
+    }
+  }
+
+  async parse() {
+    const parser = await mwParser();
+    const rawText = this.document?.getText() ?? "";
+    const parsed = parser.parse(rawText);
+    this.parseResult = {
+      markwhenState: {
+        rawText,
+        parsed: parsed.timelines,
+        transformed: parsed.timelines[0].events,
+      },
+      appState: {
+        colorMap: useColors(parsed.timelines[0]),
+      },
+    };
+    this.lpc?.postRequest("markwhenState", this.parseResult?.markwhenState);
+    this.lpc?.postRequest("appState", this.getAppState());
+  }
+
+  async updateWebview() {
+    await this.parse();
   }
 
   public async resolveCustomTextEditor(
@@ -103,6 +153,7 @@ export class MarkwhenTimelineEditorProvider
     webviewPanel: vscode.WebviewPanel,
     token: vscode.CancellationToken
   ): Promise<void> {
+    this.document = document;
     webviewPanels.push(webviewPanel);
 
     getPanel().webview.options = {
@@ -112,38 +163,16 @@ export class MarkwhenTimelineEditorProvider
       webviewPanel.webview
     );
 
-    const updateWebview = () => {
-      localProcedureCall?.updateWebviewText(document.getText());
-    };
+    vscode.window.onDidChangeActiveColorTheme((theme) => {
+      this.lpc?.postRequest("appState", this.getAppState());
+    });
 
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(
-      (e) => {
-        if (e.document.uri.toString() === document.uri.toString()) {
-          updateWebview();
-        }
-      }
+      this.onDocumentChange
     );
-
-    getPanel().onDidDispose(() => {
-      changeDocumentSubscription.dispose();
-    });
 
     const updateTextRequest = (text: string) => {
       this.setDocument(document, text);
-    };
-
-    const allowSource = async (src?: string) => {
-      const alreadyAllowed =
-        (this.context.globalState.get("allowedSources") as
-          | string[]
-          | undefined) || [];
-      if (!src) {
-        localProcedureCall?.allowedSources(alreadyAllowed);
-      } else {
-        const newSet = Array.from(new Set([src, ...alreadyAllowed]));
-        await this.context.globalState.update("allowedSources", newSet);
-        localProcedureCall?.allowedSources(newSet);
-      }
     };
 
     const showInEditor = (location: number) => {
@@ -156,13 +185,39 @@ export class MarkwhenTimelineEditorProvider
       }
     };
 
-    localProcedureCall = lpc(
-      getPanel().webview,
-      updateTextRequest,
-      allowSource,
-      showInEditor
-    );
-    updateWebview();
+    getPanel().onDidDispose(() => {
+      changeDocumentSubscription.dispose();
+    });
+
+    this.updateWebview();
+  }
+
+  getAppState(): AppState {
+    const isDark =
+      vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark;
+    return {
+      isDark,
+      hoveringPath: undefined,
+      detailPath: undefined,
+      colorMap: this.parseResult?.appState.colorMap ?? {},
+    };
+  }
+
+  appState() {
+    this.lpc?.postRequest("appState", this.getAppState());
+  }
+
+  async markwhenState() {
+    const parser = await mwParser();
+    const rawText = this.document?.getText();
+    // (await import("@markwhen/parser")).parse(rawText).timelines[0]
+    const parsed = parser.parse(rawText);
+    // const transformed = parsed;
+    return {
+      rawText,
+      parsed: parsed.timelines,
+      transformed: parsed.timelines[0].events,
+    };
   }
 
   private async getHtmlForWebview(webview: vscode.Webview): Promise<string> {
@@ -172,47 +227,23 @@ export class MarkwhenTimelineEditorProvider
     // const cssUri = webview.asWebviewUri(
     //   vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.css")
     // );
+    // const websocket = await this.getWebsocket()
+    this.lpc = await useLpc(webview, this);
     const p = vscode.Uri.joinPath(
       vscode.Uri.file(this.context.asAbsolutePath("assets/views/timeline.html"))
     );
 
-    const uriPath = vscode.Uri.joinPath(
-      this.context.extensionUri,
-      "assets",
-      "views",
-      "timeline.html"
-    );
-    console.log("uriPath", uriPath);
-    const baseAssetsPath = webview.asWebviewUri(uriPath);
-    console.log("baseAssetsPath", baseAssetsPath);
-    const a = await vscode.workspace.fs.readFile(p).then((v) => {
+    // const uriPath = vscode.Uri.joinPath(
+    //   this.context.extensionUri,
+    //   "assets",
+    //   "views",
+    //   "timeline.html"
+    // );
+    return vscode.workspace.fs.readFile(p).then((v) => {
       const td = new TextDecoder();
       const s = td.decode(v);
       return s;
     });
-    // console.log(a.substring(0, 200));
-    // const nonce = getNonce();
-    const html = injectScript(
-      a,
-      `var __markwhen_wss_url = "ws://localhost:7237";`
-    );
-    return html;
-    // return `<!DOCTYPE html>
-    // <html lang="en" style="height:100%; width: 100%">
-    //   <head>
-    //     <meta charset="UTF-8" />
-    //     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    //     <title>Markwhen</title>
-    // 		<link rel="" href="${baseAssetsPath}">
-    //     <script nonce=${nonce}>var __baseAssetsPath = "${p.toString(
-    //   true
-    // )}"</script>
-    //   </head>
-    //   <body style="height:100%; width: 100%">
-    //     <iframe style="border: 0; height: 100%; width: 100%; margin: 0, padding: 0" src="${baseAssetsPath}">
-    //   </body>
-    // </html>
-    // `;
   }
 
   private setDocument(document: vscode.TextDocument, timelineString: string) {
@@ -224,12 +255,4 @@ export class MarkwhenTimelineEditorProvider
     );
     return vscode.workspace.applyEdit(edit);
   }
-}
-
-function injectScript(domString: string, jsToInject: string) {
-  const html = parseHtml(domString);
-  const script = `<script>${jsToInject}</script>`;
-  const head = html.getElementsByTagName("head")[0];
-  head.innerHTML = script + head.innerHTML;
-  return html.toString();
 }
