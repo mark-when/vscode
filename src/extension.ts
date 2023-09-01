@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import {
   MarkwhenTimelineEditorProvider,
   webviewPanels,
-} from "./timelineEditor";
+} from "./MarkwhenTimelineEditorProvider";
 import "./semanticTokenProvider";
 import { legend, provider } from "./semanticTokenProvider";
 

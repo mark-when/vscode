@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { MarkwhenTimelineEditorProvider } from "./timelineEditor";
+import { MarkwhenTimelineEditorProvider } from "./MarkwhenTimelineEditorProvider";
 export class Hover implements vscode.HoverProvider {
   editor: MarkwhenTimelineEditorProvider;
 

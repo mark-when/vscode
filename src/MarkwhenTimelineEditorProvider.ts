@@ -1,7 +1,6 @@
 import { TextDecoder } from "util";
 import vscode from "vscode";
-import { AppState, MessageListeners, useLpc } from "./lpc";
-import { Server } from "http";
+import { AppState, useLpc } from "./lpc";
 import { useColors } from "./utilities/colorMap";
 
 export let webviewPanels = [] as vscode.WebviewPanel[];
@@ -121,7 +120,9 @@ export class MarkwhenTimelineEditorProvider
   }
 
   onDocumentChange(event: vscode.TextDocumentChangeEvent) {
+    console.log("doc change", event, this.document);
     if (event.document.uri.toString() === this.document?.uri.toString()) {
+      console.log("updating webview");
       this.updateWebview();
     }
   }
@@ -129,6 +130,7 @@ export class MarkwhenTimelineEditorProvider
   async parse() {
     const parser = await mwParser();
     const rawText = this.document?.getText() ?? "";
+    // console.log(rawText)
     const parsed = parser.parse(rawText);
     this.parseResult = {
       markwhenState: {
