@@ -18,7 +18,7 @@ export const provider: vscode.DocumentSemanticTokensProvider = {
   ): Promise<vscode.SemanticTokens> {
     const tokensBuilder = new vscode.SemanticTokensBuilder(legend);
     const mwParser = await import("@markwhen/parser");
-    const { RangeType } = await import("@markwhen/parser/Types");
+    const { RangeType } = await import("@markwhen/parser");
 
     const markwhen = mwParser.parse(document.getText());
     markwhen.timelines.forEach((timeline) => {
@@ -27,6 +27,10 @@ export const provider: vscode.DocumentSemanticTokensProvider = {
         const to = document.positionAt(range.to);
         const vscodeRange = new vscode.Range(from, to);
         switch (range.type) {
+          case RangeType.listItemIndicator:
+          case RangeType.CheckboxItemIndicator:
+            tokensBuilder.push(vscodeRange, "variable");
+            break;
           case RangeType.Comment:
             tokensBuilder.push(vscodeRange, "comment");
             break;
@@ -43,8 +47,6 @@ export const provider: vscode.DocumentSemanticTokensProvider = {
             tokensBuilder.push(vscodeRange, "property");
           case RangeType.Recurrence:
             tokensBuilder.push(vscodeRange, "class");
-          default:
-            tokensBuilder.push(vscodeRange, "string");
         }
       });
     });
