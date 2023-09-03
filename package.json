@@ -2,7 +2,7 @@
   "name": "markwhen",
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mark-when/markwhen"
@@ -40,7 +40,7 @@
     "commands": [
       {
         "command": "markwhen.openPreview",
-        "title": "Open markwhen preview to the side",
+        "title": "Open preview to the side",
         "category": "Markwhen",
         "icon": "$(open-preview)"
       },
@@ -49,6 +49,24 @@
         "title": "View event in timeline",
         "category": "Markwhen",
         "icon": "$(arrow-right)"
+      },
+      {
+        "command": "markwhen.timelineView",
+        "title": "Timeline view",
+        "category": "Markwhen",
+        "icon": {
+          "light": "icons/timeline.svg",
+          "dark": "icons/timeline_dark.svg"
+        }
+      },
+      {
+        "command": "markwhen.calendarView",
+        "title": "Calendar view",
+        "category": "Markwhen",
+        "icon": {
+          "light": "icons/calendar.svg",
+          "dark": "icons/calendar_dark.svg"
+        }
       }
     ],
     "menus": {
@@ -62,6 +80,16 @@
         {
           "command": "markwhen.openPreview",
           "when": "editorLangId == markwhen",
+          "group": "navigation"
+        },
+        {
+          "command": "markwhen.timelineView",
+          "when": "activeCustomEditorId == markwhen.timeline",
+          "group": "navigation"
+        },
+        {
+          "command": "markwhen.calendarView",
+          "when": "activeCustomEditorId == markwhen.timeline",
           "group": "navigation"
         }
       ]
@@ -101,15 +129,14 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && node build.js",
+    "build": "tsc -p ./ && node build.js",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
     "link:parser": "yalc add @markwhen/parser && yalc link @markwhen/parser && npm install",
     "unlink:parser": "yalc remove @markwhen/parser && npm install",
-    "deploy": "vsce publish",
-    "copyViews": ""
+    "deploy": "vsce publish"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
@@ -127,11 +154,10 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@markwhen/calendar": "^1.3.1",
-    "@markwhen/parser": "^0.9.7",
-    "@markwhen/timeline": "^1.2.0",
+    "@markwhen/calendar": "^1.3.2",
+    "@markwhen/parser": "^0.10.4",
+    "@markwhen/timeline": "^1.2.3",
     "node-html-parser": "^6.1.6",
-    "vscode-languageclient": "^8.0.2",
-    "ws": "^8.13.0"
+    "vscode-languageclient": "^8.0.2"
   }
 }
