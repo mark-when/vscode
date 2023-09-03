@@ -36,6 +36,7 @@ export class MarkwhenTimelineEditorProvider
       colorMap: Record<string, Record<string, string>>;
     };
   };
+  view: "timeline" | "calendar" = "timeline";
 
   public static register(context: vscode.ExtensionContext): {
     providerRegistration: vscode.Disposable;
@@ -89,29 +90,30 @@ export class MarkwhenTimelineEditorProvider
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
-    const resp = null; //await localProcedureCall?.hoverFromEditor(
-    //document.offsetAt(position)
-    //);
-    if (!resp || !resp.params) {
-      return null;
-    }
-    const viewInTimelineCommandUri = vscode.Uri.parse(
-      `command:markwhen.viewInTimeline?${encodeURIComponent(
-        JSON.stringify(resp.params)
-      )}`
-    );
-    const view = new vscode.MarkdownString(
-      `[View in timeline](${viewInTimelineCommandUri})`
-    );
-    // To enable command URIs in Markdown content, you must set the `isTrusted` flag.
-    // When creating trusted Markdown string, make sure to properly sanitize all the
-    // input content so that only expected command URIs can be executed
-    view.isTrusted = true;
+    return null
+    // const resp = await this.lpc?.hoverFromEditor(
+    //   document.offsetAt(position)
+    // );
+    // if (!resp || !resp.params) {
+    //   return null;
+    // }
+    // const viewInTimelineCommandUri = vscode.Uri.parse(
+    //   `command:markwhen.viewInTimeline?${encodeURIComponent(
+    //     JSON.stringify(resp.params)
+    //   )}`
+    // );
+    // const view = new vscode.MarkdownString(
+    //   `[View in timeline](${viewInTimelineCommandUri})`
+    // );
+    // // To enable command URIs in Markdown content, you must set the `isTrusted` flag.
+    // // When creating trusted Markdown string, make sure to properly sanitize all the
+    // // input content so that only expected command URIs can be executed
+    // view.isTrusted = true;
 
-    const rangeFrom = document.positionAt(resp.params.range.from);
-    const rangeTo = document.positionAt(resp.params.range.to);
+    // const rangeFrom = document.positionAt(resp.params.range.from);
+    // const rangeTo = document.positionAt(resp.params.range.to);
 
-    return new vscode.Hover(view, new vscode.Range(rangeFrom, rangeTo));
+    // return new vscode.Hover(view, new vscode.Range(rangeFrom, rangeTo));
   }
 
   public viewInTimeline(...args: any[]) {
@@ -119,10 +121,35 @@ export class MarkwhenTimelineEditorProvider
     this.lpc?.postRequest("jumpToPath", path);
   }
 
+  public async setView(view: "timeline" | "calendar") {
+    this.view = view;
+    getPanel().webview.html = await this.getHtmlForWebview(this.view);
+
+    // @ts-ignore
+    this.lpc = await useLpc(getPanel().webview, {
+      markwhenState: async (event) => {
+        const parser = await mwParser();
+        const rawText = this.document?.getText();
+        // (await import("@markwhen/parser")).parse(rawText).timelines[0]
+        const parsed = parser.parse(rawText);
+        // const transformed = parsed;
+        return {
+          rawText,
+          parsed: parsed.timelines,
+          transformed: parsed.timelines[0].events,
+        };
+      },
+      appState: () => {
+        this.lpc?.postRequest("appState", this.getAppState());
+      },
+    });
+  }
+
   onDocumentChange(event: vscode.TextDocumentChangeEvent) {
-    console.log("doc change", event, this.document);
+    if (!this.document) {
+      throw new Error("No document");
+    }
     if (event.document.uri.toString() === this.document?.uri.toString()) {
-      console.log("updating webview");
       this.updateWebview();
     }
   }
@@ -142,12 +169,16 @@ export class MarkwhenTimelineEditorProvider
         colorMap: useColors(parsed.timelines[0]),
       },
     };
-    this.lpc?.postRequest("markwhenState", this.parseResult?.markwhenState);
-    this.lpc?.postRequest("appState", this.getAppState());
+    this.postState();
   }
 
   async updateWebview() {
     await this.parse();
+  }
+
+  public postState() {
+    this.lpc?.postRequest("markwhenState", this.parseResult?.markwhenState);
+    this.lpc?.postRequest("appState", this.getAppState());
   }
 
   public async resolveCustomTextEditor(
@@ -161,16 +192,17 @@ export class MarkwhenTimelineEditorProvider
     getPanel().webview.options = {
       enableScripts: true,
     };
-    getPanel().webview.html = await this.getHtmlForWebview(
-      webviewPanel.webview
-    );
+
+    await this.setView(this.view);
 
     vscode.window.onDidChangeActiveColorTheme((theme) => {
       this.lpc?.postRequest("appState", this.getAppState());
     });
 
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(
-      this.onDocumentChange
+      (event) => {
+        this.onDocumentChange(event);
+      }
     );
 
     const updateTextRequest = (text: string) => {
@@ -205,42 +237,12 @@ export class MarkwhenTimelineEditorProvider
     };
   }
 
-  appState() {
-    this.lpc?.postRequest("appState", this.getAppState());
-  }
-
-  async markwhenState() {
-    const parser = await mwParser();
-    const rawText = this.document?.getText();
-    // (await import("@markwhen/parser")).parse(rawText).timelines[0]
-    const parsed = parser.parse(rawText);
-    // const transformed = parsed;
-    return {
-      rawText,
-      parsed: parsed.timelines,
-      transformed: parsed.timelines[0].events,
-    };
-  }
-
-  private async getHtmlForWebview(webview: vscode.Webview): Promise<string> {
-    // const scriptUri = webview.asWebviewUri(
-    //   vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.js")
-    // );
-    // const cssUri = webview.asWebviewUri(
-    //   vscode.Uri.joinPath(this.context.extensionUri, "assets", "index.css")
-    // );
-    // const websocket = await this.getWebsocket()
-    this.lpc = await useLpc(webview, this);
+  private async getHtmlForWebview(
+    view: "timeline" | "calendar"
+  ): Promise<string> {
     const p = vscode.Uri.joinPath(
-      vscode.Uri.file(this.context.asAbsolutePath("assets/views/timeline.html"))
+      vscode.Uri.file(this.context.asAbsolutePath(`assets/views/${view}.html`))
     );
-
-    // const uriPath = vscode.Uri.joinPath(
-    //   this.context.extensionUri,
-    //   "assets",
-    //   "views",
-    //   "timeline.html"
-    // );
     return vscode.workspace.fs.readFile(p).then((v) => {
       const td = new TextDecoder();
       const s = td.decode(v);

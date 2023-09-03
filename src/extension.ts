@@ -24,12 +24,12 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.languages.registerHoverProvider("markwhen", editor);
   vscode.languages.registerFoldingRangeProvider("markwhen", editor);
 
-  const previewHandler = () => {
+  const openPreview = async () => {
     const active = vscode.window.activeTextEditor;
     if (!active) {
       return;
     }
-    vscode.commands.executeCommand(
+    return vscode.commands.executeCommand(
       "vscode.openWith",
       active.document.uri,
       "markwhen.timeline",
@@ -39,21 +39,26 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     providerRegistration,
-    vscode.commands.registerCommand(command_preview, previewHandler),
+    vscode.commands.registerCommand(command_preview, openPreview),
     vscode.commands.registerCommand(command_viewInTimeline, async (arg) => {
       if (!webviewPanels.length) {
-        const active = vscode.window.activeTextEditor;
-        if (!active) {
-          return;
-        }
-        await vscode.commands.executeCommand(
-          "vscode.openWith",
-          active.document.uri,
-          "markwhen.timeline",
-          vscode.ViewColumn.Beside
-        );
+        await openPreview();
       }
       editor.viewInTimeline(arg);
+    }),
+    vscode.commands.registerCommand("markwhen.timelineView", async (arg) => {
+      if (!webviewPanels.length) {
+        await openPreview();
+      }
+      await editor.setView("timeline");
+      editor.postState()
+    }),
+    vscode.commands.registerCommand("markwhen.calendarView", async (arg) => {
+      if (!webviewPanels.length) {
+        await openPreview();
+      }
+      await editor.setView("calendar");
+      editor.postState()
     })
   );
 }
