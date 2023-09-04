@@ -9,7 +9,7 @@
   },
   "icon": "icons/markwhen.png",
   "engines": {
-    "vscode": "^1.69.0"
+    "vscode": "^1.81.0"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/kochrt"
@@ -128,7 +128,7 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run build",
     "build": "tsc -p ./ && node build.js",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
@@ -136,7 +136,7 @@
     "test": "node ./out/test/runTest.js",
     "link:parser": "yalc add @markwhen/parser && yalc link @markwhen/parser && npm install",
     "unlink:parser": "yalc remove @markwhen/parser && npm install",
-    "deploy": "vsce publish"
+    "deploy": "./node_modules/@vscode/vsce/vsce publish"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
@@ -148,6 +148,7 @@
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
     "@vscode/test-electron": "^2.1.5",
+    "@vscode/vsce": "^2.21.0",
     "eslint": "^8.20.0",
     "glob": "^8.0.3",
     "mocha": "^10.0.0",
