@@ -2,13 +2,13 @@
 title: this is my timeline
 description: This is the description
 
-#tag: #000
+#tag: #abc
 
 section other section #tag
 
 now/2025: somethign crazy
 
-2023: some event goes here
+2023: some event goes here #other
 2024: another event
 
 now: what the hell is going on

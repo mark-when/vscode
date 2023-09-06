@@ -2,7 +2,7 @@
   "name": "markwhen",
   "displayName": "Markwhen",
   "description": "Visualize and edit markwhen documents",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/mark-when/markwhen"
@@ -136,7 +136,8 @@
     "test": "node ./out/test/runTest.js",
     "link:parser": "yalc add @markwhen/parser && yalc link @markwhen/parser && npm install",
     "unlink:parser": "yalc remove @markwhen/parser && npm install",
-    "deploy": "./node_modules/@vscode/vsce/vsce publish"
+    "deploy": "./node_modules/@vscode/vsce/vsce publish",
+    "package": "./node_modules/@vscode/vsce/vsce package"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",

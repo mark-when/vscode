@@ -1,5 +1,14 @@
 # Change Log
 
+## 1.4.1
+
+- Fix crash in 1.4.0 by using the markwhen parser from a worker
+
+## 1.4.0
+
+- Bump and bundle timeline and calendar versions
+- Switch views from the command bar
+
 ## 1.3.1
 - Expand/collapse all groups/sections
 - Timeline view show in editor button now works (moves the cursor to the start of the event)
