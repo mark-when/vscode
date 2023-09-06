@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { parse } from "./useParserWorker";
+
 const tokenTypes = [
   "comment",
   "string",
@@ -10,6 +12,29 @@ const tokenTypes = [
   "type",
   "class",
 ];
+enum RangeType {
+  Comment = "comment",
+  CheckboxItemIndicator = "checkboxItemIndicator",
+  listItemIndicator = "listItemIndicator",
+  ListItemContents = "listItemContents",
+  Tag = "tag",
+  tagDefinition = "tagDefinition",
+  Title = "title",
+  View = "view",
+  Viewer = "viewer",
+  Description = "description",
+  Section = "section",
+  DateRange = "dateRange",
+  DateRangeColon = "dateRangeColon",
+  Event = "event",
+  Edit = "edit",
+  Editor = "editor",
+  Recurrence = "recurrence",
+  FrontmatterDelimiter = "frontMatterDelimiter",
+  HeaderKey = "headerKey",
+  HeaderKeyColon = "headerKeyColon",
+  HeaderValue = "headerValue"
+}
 export const legend = new vscode.SemanticTokensLegend(tokenTypes, []);
 
 export const provider: vscode.DocumentSemanticTokensProvider = {
@@ -17,12 +42,10 @@ export const provider: vscode.DocumentSemanticTokensProvider = {
     document: vscode.TextDocument
   ): Promise<vscode.SemanticTokens> {
     const tokensBuilder = new vscode.SemanticTokensBuilder(legend);
-    const mwParser = await import("@markwhen/parser");
-    const { RangeType } = await import("@markwhen/parser");
 
-    const markwhen = mwParser.parse(document.getText());
-    markwhen.timelines.forEach((timeline) => {
-      timeline.ranges.forEach((range) => {
+    const markwhen = await parse(document.getText());
+    markwhen.timelines.forEach((timeline: any) => {
+      timeline.ranges.forEach((range: any) => {
         const from = document.positionAt(range.from);
         const to = document.positionAt(range.to);
         const vscodeRange = new vscode.Range(from, to);

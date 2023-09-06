@@ -2,20 +2,12 @@ import { TextDecoder } from "util";
 import vscode from "vscode";
 import { AppState, useLpc } from "./lpc";
 import { useColors } from "./utilities/colorMap";
+import { parse } from "./useParserWorker";
 
 export let webviewPanels = [] as vscode.WebviewPanel[];
 
 const getPanel = () => {
   return webviewPanels[webviewPanels.length - 1];
-};
-
-let cachedParser: any;
-const mwParser = async () => {
-  if (cachedParser) {
-    return cachedParser;
-  }
-  cachedParser = await import("@markwhen/parser");
-  return cachedParser;
 };
 
 export class MarkwhenTimelineEditorProvider
@@ -64,7 +56,7 @@ export class MarkwhenTimelineEditorProvider
     context: vscode.FoldingContext,
     token: vscode.CancellationToken
   ): Promise<vscode.FoldingRange[]> {
-    const mw = (await mwParser()).parse(document.getText());
+    const mw = await parse(document.getText());
     const ranges = [] as vscode.FoldingRange[];
     for (const timeline of mw.timelines) {
       const indices = Object.keys(timeline.foldables);
@@ -90,7 +82,7 @@ export class MarkwhenTimelineEditorProvider
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
-    return null
+    return null;
     // const resp = await this.lpc?.hoverFromEditor(
     //   document.offsetAt(position)
     // );
@@ -128,11 +120,8 @@ export class MarkwhenTimelineEditorProvider
     // @ts-ignore
     this.lpc = await useLpc(getPanel().webview, {
       markwhenState: async (event) => {
-        const parser = await mwParser();
-        const rawText = this.document?.getText();
-        // (await import("@markwhen/parser")).parse(rawText).timelines[0]
-        const parsed = parser.parse(rawText);
-        // const transformed = parsed;
+        const rawText = this.document?.getText() || "";
+        const parsed = await parse(rawText);
         return {
           rawText,
           parsed: parsed.timelines,
@@ -155,10 +144,9 @@ export class MarkwhenTimelineEditorProvider
   }
 
   async parse() {
-    const parser = await mwParser();
     const rawText = this.document?.getText() ?? "";
     // console.log(rawText)
-    const parsed = parser.parse(rawText);
+    const parsed = await parse(rawText);
     this.parseResult = {
       markwhenState: {
         rawText,
