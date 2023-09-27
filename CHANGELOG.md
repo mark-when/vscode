@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.2
+
+- Update timeline
+
 ## 1.4.1
 
 - Fix crash in 1.4.0 by using the markwhen parser from a worker
