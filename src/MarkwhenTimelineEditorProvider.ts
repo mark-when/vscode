@@ -1,11 +1,20 @@
 import { TextDecoder } from "util";
 import vscode from "vscode";
-import { AppState, useLpc } from "./lpc";
+import { AppState, EventPath, useLpc } from "./lpc";
 import { useColors } from "./utilities/colorMap";
 import { parse } from "./useParserWorker";
+import {
+  Node,
+  Event,
+  get,
+  toDateRange,
+  DateRangeIso,
+  DateFormat,
+} from "@markwhen/parser";
+import { editEventDateRange } from "./dateTextInterpolation";
+import { DisplayScale } from "./utilities/dateTimeUtilities";
 
 export let webviewPanels = [] as vscode.WebviewPanel[];
-
 const getPanel = () => {
   return webviewPanels[webviewPanels.length - 1];
 };
@@ -130,6 +139,42 @@ export class MarkwhenTimelineEditorProvider
       },
       appState: () => {
         this.lpc?.postRequest("appState", this.getAppState());
+      },
+      editEventDateRange: ({
+        path,
+        range,
+        scale,
+        preferredInterpolationFormat,
+      }: {
+        path: EventPath;
+        range: DateRangeIso;
+        scale: DisplayScale;
+        preferredInterpolationFormat: DateFormat | undefined;
+      }) => {
+        const eventNode = get(
+          this.parseResult?.markwhenState.transformed,
+          path
+        ) as Node<Event>;
+        const event = eventNode.value;
+        const newText = editEventDateRange(
+          event,
+          toDateRange(range),
+          scale,
+          preferredInterpolationFormat
+        );
+        if (!newText) {
+          return;
+        }
+        const edit = new vscode.WorkspaceEdit();
+        edit.replace(
+          this.document!.uri,
+          new vscode.Range(
+            this.document!.positionAt(event.dateRangeInText.from),
+            this.document!.positionAt(event.dateRangeInText.to)
+          ),
+          newText
+        );
+        return vscode.workspace.applyEdit(edit);
       },
     });
   }
