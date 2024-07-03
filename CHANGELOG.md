@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.4 
+
+- Editing from the timeline view (drag event bars and the text will update)
+
 ## 1.4.2
 
 - Update timeline

@@ -4,9 +4,9 @@ View and edit markwhen documents.
 
 Read the markwhen documentation [here](https://docs.markwhen.com).
 
+![](https://blog.markwhen.com/images/calendar_comp3.png)
 ![](https://blog.markwhen.com/images/calendar2.png)
 ![](https://blog.markwhen.com/images/calendar_comp2.png)
-![](https://blog.markwhen.com/images/calendar_comp3.png)
 
 ## Features
 
@@ -20,6 +20,14 @@ Read the markwhen documentation [here](https://docs.markwhen.com).
 - Tags
 
 ## Release Notes
+
+## 1.4.4 
+
+- Editing from the timeline view (drag event bars and the text will update)
+
+## 1.4.2
+
+- Update timeline
 
 ## 1.4.1
 
