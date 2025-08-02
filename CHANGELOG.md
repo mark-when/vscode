@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.5
+- Update timeline & calendar, add Oneview (can be accessed through command palette: `Markwhen: View oneview`)
+- Add syntax highlighting for event properties
+
 ## 1.4.4 
 
 - Editing from the timeline view (drag event bars and the text will update)

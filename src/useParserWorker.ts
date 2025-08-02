@@ -1,3 +1,4 @@
+import { ParseResult } from "@markwhen/parser";
 import { join } from "path";
 import { Worker } from "worker_threads";
 
@@ -12,10 +13,11 @@ const calls = new Map<
 >();
 
 parserWorker.addListener("message", ({ id, payload }) => {
+  console.log(id, payload);
   calls.get(id)?.resolve(payload);
 });
 
-export const parse = async (text: string): Promise<any> => {
+export const parse = async (text: string): Promise<ParseResult> => {
   return new Promise((resolve, reject) => {
     const id = callId++;
     calls.set(id, {

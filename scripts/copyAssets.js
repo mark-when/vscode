@@ -8,3 +8,7 @@ cpSync(
   "node_modules/@markwhen/calendar/dist/index.html",
   "assets/views/calendar.html"
 );
+cpSync(
+  "node_modules/@markwhen/oneview/dist/index.html",
+  "assets/views/oneview.html"
+);

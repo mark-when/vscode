@@ -1,8 +1,12 @@
+import { EventGroup, ParseResult, Timeline } from "@markwhen/parser";
 import { COLORS, HUMAN_COLORS, hexToRgb } from "./colorUtils";
 
 export type ColorMap = Record<string, Record<string, string>>;
 
-const colorMapAndRangesFromMarkwhen = (timeline: any, colorIndex: number) => {
+const colorMapAndRangesFromMarkwhen = (
+  timeline: Timeline,
+  colorIndex: number
+) => {
   const map = {} as Record<string, string>;
   const ranges = timeline.ranges.flatMap((r: any) => {
     if (r.type !== "tag") {
@@ -40,10 +44,13 @@ const colorMapAndRangesFromMarkwhen = (timeline: any, colorIndex: number) => {
   return [map, ranges, colorIndex] as const;
 };
 
-export const useColors = (markwhen: any) => {
+export const useColors = (markwhen: Timeline) => {
   let colorIndex = 0;
   const colorMap = {} as ColorMap;
-  for (const [path, timeline] of [["default", markwhen]] as [string, any][]) {
+  for (const [path, timeline] of [["default", markwhen]] as [
+    string,
+    Timeline
+  ][]) {
     const [map, ranges, index] = colorMapAndRangesFromMarkwhen(
       timeline,
       colorIndex

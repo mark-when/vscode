@@ -1,21 +1,10 @@
 import { getNonce } from "./utilities/nonce";
 import { Webview } from "vscode";
-import WebSocket, { WebSocketServer } from "ws";
+import type { AppState, MarkwhenState } from "@markwhen/view-client";
 
 export type ColorMap = Record<string, Record<string, string>>;
 export type EventPath = number[];
 
-export interface AppState {
-  isDark?: boolean;
-  hoveringPath?: EventPath;
-  detailPath?: EventPath;
-  colorMap: ColorMap;
-}
-export interface MarkwhenState {
-  rawText?: string;
-  parsed: any[];
-  transformed?: any;
-}
 type DateRangeIso = { fromDateTimeIso: string; toDateTimeIso: string };
 export interface MessageTypes {
   appState: AppState;

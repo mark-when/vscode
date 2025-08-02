@@ -1,18 +1,19 @@
 import { TextDecoder } from "util";
 import vscode from "vscode";
-import { AppState, EventPath, useLpc } from "./lpc";
+import { EventPath, useLpc } from "./lpc";
 import { useColors } from "./utilities/colorMap";
 import { parse } from "./useParserWorker";
 import {
-  Node,
   Event,
   get,
   toDateRange,
   DateRangeIso,
   DateFormat,
+  ParseResult,
 } from "@markwhen/parser";
 import { editEventDateRange } from "./dateTextInterpolation";
 import { DisplayScale } from "./utilities/dateTimeUtilities";
+import type { AppState, MarkwhenState } from "@markwhen/view-client";
 
 export let webviewPanels = [] as vscode.WebviewPanel[];
 const getPanel = () => {
@@ -28,16 +29,12 @@ export class MarkwhenTimelineEditorProvider
   document?: vscode.TextDocument;
   lpc?: ReturnType<typeof useLpc>;
   parseResult?: {
-    markwhenState: {
-      rawText: string;
-      parsed: any[];
-      transformed: any;
-    };
+    markwhenState: MarkwhenState;
     appState: {
       colorMap: Record<string, Record<string, string>>;
     };
   };
-  view: "timeline" | "calendar" = "timeline";
+  view: "timeline" | "calendar" | "oneview" = "timeline";
 
   public static register(context: vscode.ExtensionContext): {
     providerRegistration: vscode.Disposable;
@@ -67,21 +64,18 @@ export class MarkwhenTimelineEditorProvider
   ): Promise<vscode.FoldingRange[]> {
     const mw = await parse(document.getText());
     const ranges = [] as vscode.FoldingRange[];
-    for (const timeline of mw.timelines) {
-      const indices = Object.keys(timeline.foldables);
-      for (const index of indices) {
-        // @ts-ignore
-        const foldable = timeline.foldables[index] as Foldable;
-        ranges.push(
-          new vscode.FoldingRange(
-            foldable.startLine,
-            document.positionAt(foldable.endIndex).line,
-            foldable.type === "section"
-              ? vscode.FoldingRangeKind.Region
-              : vscode.FoldingRangeKind.Comment
-          )
-        );
-      }
+    const indices = Object.keys(mw.foldables);
+    for (const index of indices) {
+      const foldable = mw.foldables[parseInt(index)];
+      ranges.push(
+        new vscode.FoldingRange(
+          document.positionAt(foldable.startIndex).line,
+          document.positionAt(foldable.endIndex).line,
+          foldable.type === "section"
+            ? vscode.FoldingRangeKind.Region
+            : vscode.FoldingRangeKind.Comment
+        )
+      );
     }
     return ranges;
   }
@@ -122,7 +116,7 @@ export class MarkwhenTimelineEditorProvider
     this.lpc?.postRequest("jumpToPath", path);
   }
 
-  public async setView(view: "timeline" | "calendar") {
+  public async setView(view: "timeline" | "calendar" | "oneview") {
     this.view = view;
     getPanel().webview.html = await this.getHtmlForWebview(this.view);
 
@@ -133,8 +127,8 @@ export class MarkwhenTimelineEditorProvider
         const parsed = await parse(rawText);
         return {
           rawText,
-          parsed: parsed.timelines,
-          transformed: parsed.timelines[0].events,
+          parsed,
+          transformed: parsed.events,
         };
       },
       appState: () => {
@@ -151,11 +145,12 @@ export class MarkwhenTimelineEditorProvider
         scale: DisplayScale;
         preferredInterpolationFormat: DateFormat | undefined;
       }) => {
-        const eventNode = get(
-          this.parseResult?.markwhenState.transformed,
-          path
-        ) as Node<Event>;
-        const event = eventNode.value;
+        const transformed = this.parseResult?.markwhenState.transformed;
+        if (!transformed) {
+          return;
+        }
+        const eventNode = get(transformed, path) as Event;
+        const event = eventNode;
         const newText = editEventDateRange(
           event,
           toDateRange(range),
@@ -169,8 +164,8 @@ export class MarkwhenTimelineEditorProvider
         edit.replace(
           this.document!.uri,
           new vscode.Range(
-            this.document!.positionAt(event.dateRangeInText.from),
-            this.document!.positionAt(event.dateRangeInText.to)
+            this.document!.positionAt(event.textRanges.datePart.from),
+            this.document!.positionAt(event.textRanges.datePart.to)
           ),
           newText
         );
@@ -191,15 +186,15 @@ export class MarkwhenTimelineEditorProvider
   async parse() {
     const rawText = this.document?.getText() ?? "";
     // console.log(rawText)
-    const parsed = await parse(rawText);
+    const parsed: ParseResult = await parse(rawText);
     this.parseResult = {
       markwhenState: {
         rawText,
-        parsed: parsed.timelines,
-        transformed: parsed.timelines[0].events,
+        parsed: parsed,
+        transformed: parsed.events,
       },
       appState: {
-        colorMap: useColors(parsed.timelines[0]),
+        colorMap: useColors(parsed),
       },
     };
     this.postState();
@@ -271,7 +266,7 @@ export class MarkwhenTimelineEditorProvider
   }
 
   private async getHtmlForWebview(
-    view: "timeline" | "calendar"
+    view: "timeline" | "calendar" | "oneview"
   ): Promise<string> {
     const p = vscode.Uri.joinPath(
       vscode.Uri.file(this.context.asAbsolutePath(`assets/views/${view}.html`))

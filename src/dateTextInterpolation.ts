@@ -95,7 +95,7 @@ function editRelativeEventDateRange(
   preferredInterpolationFormat: DateFormat | undefined,
   originalRange: DateRange
 ): string | undefined {
-  const dateText = event.dateText || "";
+  const dateText = event.firstLine.restTrimmed || "";
   const relativeMatches = getRelativeTimeMatches(dateText);
   if (!relativeMatches.length) {
     return;
@@ -128,7 +128,7 @@ function editRelativeEventDateRange(
         return newRangeString;
       }
     } else if (fromRelative) {
-      if (fromRelative![0] === event.dateText) {
+      if (fromRelative![0] === event.firstLine.datePart) {
         const originalReferenceDate = originalRange.fromDateTime;
 
         const newFromDiff = toHuman(
@@ -218,7 +218,7 @@ function editRelativeEventDateRange(
         return newRangeString;
       }
     } else if (fromRelative) {
-      if (fromRelative![0] === event.dateText) {
+      if (fromRelative![0] === event.firstLine.datePart) {
         const originalReferenceDate = originalRange.fromDateTime;
 
         const newFromDiff = toHuman(
@@ -262,9 +262,9 @@ function editRelativeEventDateRange(
       const newToDiff = toHuman(bestDiff);
 
       if (newToDiff && !newToDiff.startsWith("-")) {
-        const originalText = event.dateText!;
-        const index = originalText.indexOf(toRelative[0]);
-        const originalFrom = event.dateText!.substring(0, index);
+        const originalText = event.firstLine.datePart;
+        const index = originalText?.indexOf(toRelative[0]);
+        const originalFrom = event.firstLine.datePart!.substring(0, index);
         // Generally speaking if the date has slashes we delimit the range with a dash,
         // and if a date has dashes we delimit the range with a slash. Yes, this could be more robust
         // but I'd rather get it out the door

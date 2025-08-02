@@ -29,6 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (!active) {
       return;
     }
+
     return vscode.commands.executeCommand(
       "vscode.openWith",
       active.document.uri,
@@ -36,6 +37,14 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.ViewColumn.Beside
     );
   };
+
+  async function openView(viewName: "timeline" | "calendar" | "oneview") {
+    if (!webviewPanels.length) {
+      await openPreview();
+    }
+    await editor.setView(viewName);
+    editor.postState()
+  }
 
   context.subscriptions.push(
     providerRegistration,
@@ -47,18 +56,13 @@ export function activate(context: vscode.ExtensionContext) {
       editor.viewInTimeline(arg);
     }),
     vscode.commands.registerCommand("markwhen.timelineView", async (arg) => {
-      if (!webviewPanels.length) {
-        await openPreview();
-      }
-      await editor.setView("timeline");
-      editor.postState()
+      return openView("timeline")
     }),
     vscode.commands.registerCommand("markwhen.calendarView", async (arg) => {
-      if (!webviewPanels.length) {
-        await openPreview();
-      }
-      await editor.setView("calendar");
-      editor.postState()
+      return openView('calendar')
+    }),
+    vscode.commands.registerCommand("markwhen.oneView", async (arg) => {
+      return openView('oneview')
     })
   );
 }
