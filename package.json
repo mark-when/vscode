@@ -157,7 +157,7 @@
   },
   "dependencies": {
     "@markwhen/calendar": "^1.3.3",
-    "@markwhen/parser": "^0.11.2",
+    "@markwhen/parser": "^1.0.1",
     "@markwhen/timeline": "^1.3.0",
     "node-html-parser": "^6.1.6",
     "vscode-languageclient": "^8.0.2"

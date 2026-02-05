@@ -4,12 +4,12 @@ import { AppState, EventPath, useLpc } from "./lpc";
 import { useColors } from "./utilities/colorMap";
 import { parse } from "./useParserWorker";
 import {
-  Node,
   Event,
   get,
   toDateRange,
   DateRangeIso,
   DateFormat,
+  isEvent,
 } from "@markwhen/parser";
 import { editEventDateRange } from "./dateTextInterpolation";
 import { DisplayScale } from "./utilities/dateTimeUtilities";
@@ -151,11 +151,14 @@ export class MarkwhenTimelineEditorProvider
         scale: DisplayScale;
         preferredInterpolationFormat: DateFormat | undefined;
       }) => {
-        const eventNode = get(
+        const eventy = get(
           this.parseResult?.markwhenState.transformed,
           path
-        ) as Node<Event>;
-        const event = eventNode.value;
+        );
+        if (!eventy || !isEvent(eventy)) {
+          return;
+        }
+        const event = eventy;
         const newText = editEventDateRange(
           event,
           toDateRange(range),
@@ -169,8 +172,8 @@ export class MarkwhenTimelineEditorProvider
         edit.replace(
           this.document!.uri,
           new vscode.Range(
-            this.document!.positionAt(event.dateRangeInText.from),
-            this.document!.positionAt(event.dateRangeInText.to)
+            this.document!.positionAt(event.textRanges.datePart.from),
+            this.document!.positionAt(event.textRanges.datePart.to)
           ),
           newText
         );
