@@ -16,7 +16,15 @@ import { DisplayScale } from "./utilities/dateTimeUtilities";
 
 export let webviewPanels = [] as vscode.WebviewPanel[];
 const getPanel = () => {
-  return webviewPanels[webviewPanels.length - 1];
+  const validPanels = webviewPanels.filter(panel => {
+    try {
+      panel.webview.postMessage({});
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  return validPanels[validPanels.length - 1];
 };
 
 export class MarkwhenTimelineEditorProvider
@@ -255,8 +263,9 @@ export class MarkwhenTimelineEditorProvider
       }
     };
 
-    getPanel().onDidDispose(() => {
+    webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
+      webviewPanels = webviewPanels.filter(panel => panel !== webviewPanel);
     });
 
     this.updateWebview();
