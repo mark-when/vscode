@@ -264,7 +264,7 @@ export class MarkwhenTimelineEditorProvider
 
   getAppState(): AppState {
     const isDark =
-      vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark;
+      [vscode.ColorThemeKind.Dark, vscode.ColorThemeKind.HighContrast].indexOf(vscode.window.activeColorTheme.kind) >= 0;
     return {
       isDark,
       hoveringPath: undefined,
