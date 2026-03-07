@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { parse } from "./useParserWorker";
+import { RangeType } from "@markwhen/parser";
 
 const tokenTypes = [
   "comment",
@@ -12,29 +13,7 @@ const tokenTypes = [
   "type",
   "class",
 ];
-enum RangeType {
-  Comment = "comment",
-  CheckboxItemIndicator = "checkboxItemIndicator",
-  listItemIndicator = "listItemIndicator",
-  ListItemContents = "listItemContents",
-  Tag = "tag",
-  tagDefinition = "tagDefinition",
-  Title = "title",
-  View = "view",
-  Viewer = "viewer",
-  Description = "description",
-  Section = "section",
-  DateRange = "dateRange",
-  DateRangeColon = "dateRangeColon",
-  Event = "event",
-  Edit = "edit",
-  Editor = "editor",
-  Recurrence = "recurrence",
-  FrontmatterDelimiter = "frontMatterDelimiter",
-  HeaderKey = "headerKey",
-  HeaderKeyColon = "headerKeyColon",
-  HeaderValue = "headerValue"
-}
+
 export const legend = new vscode.SemanticTokensLegend(tokenTypes, []);
 
 export const provider: vscode.DocumentSemanticTokensProvider = {
