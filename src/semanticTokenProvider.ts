@@ -18,7 +18,7 @@ export const legend = new vscode.SemanticTokensLegend(tokenTypes, []);
 
 export const provider: vscode.DocumentSemanticTokensProvider = {
   async provideDocumentSemanticTokens(
-    document: vscode.TextDocument,
+    document: vscode.TextDocument
   ): Promise<vscode.SemanticTokens> {
     const tokensBuilder = new vscode.SemanticTokensBuilder(legend);
 
