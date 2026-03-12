@@ -10,6 +10,7 @@ import {
   DateRangeIso,
   DateFormat,
   isEvent,
+  ParseResult,
 } from "@markwhen/parser";
 import { editEventDateRange } from "./dateTextInterpolation";
 import { DisplayScale } from "./utilities/dateTimeUtilities";
@@ -30,7 +31,7 @@ export class MarkwhenTimelineEditorProvider
   parseResult?: {
     markwhenState: {
       rawText: string;
-      parsed: any[];
+      parsed: ParseResult;
       transformed: any;
     };
     appState: {
@@ -65,13 +66,12 @@ export class MarkwhenTimelineEditorProvider
     context: vscode.FoldingContext,
     token: vscode.CancellationToken
   ): Promise<vscode.FoldingRange[]> {
-    const mw = await parse(document.getText());
+    const mw = (await parse(document.getText())) as ParseResult;
     const ranges = [] as vscode.FoldingRange[];
-    for (const timeline of mw.timelines) {
-      const indices = Object.keys(timeline.foldables);
+    const indices = Object.keys(mw.foldables);
       for (const index of indices) {
         // @ts-ignore
-        const foldable = timeline.foldables[index] as Foldable;
+        const foldable = mw.foldables[index] as Foldable;
         ranges.push(
           new vscode.FoldingRange(
             foldable.startLine,
@@ -81,7 +81,6 @@ export class MarkwhenTimelineEditorProvider
               : vscode.FoldingRangeKind.Comment
           )
         );
-      }
     }
     return ranges;
   }
@@ -130,11 +129,11 @@ export class MarkwhenTimelineEditorProvider
     this.lpc = await useLpc(getPanel().webview, {
       markwhenState: async (event) => {
         const rawText = this.document?.getText() || "";
-        const parsed = await parse(rawText);
+        const parsed = (await parse(rawText)) as ParseResult;
         return {
           rawText,
-          parsed: parsed.timelines,
-          transformed: parsed.timelines[0].events,
+          parsed: parsed,
+          transformed: parsed.events,
         };
       },
       appState: () => {
@@ -194,15 +193,15 @@ export class MarkwhenTimelineEditorProvider
   async parse() {
     const rawText = this.document?.getText() ?? "";
     // console.log(rawText)
-    const parsed = await parse(rawText);
+    const parsed = (await parse(rawText)) as ParseResult;
     this.parseResult = {
       markwhenState: {
         rawText,
-        parsed: parsed.timelines,
-        transformed: parsed.timelines[0].events,
+        parsed: parsed,
+        transformed: parsed.events,
       },
       appState: {
-        colorMap: useColors(parsed.timelines[0]),
+        colorMap: useColors(parsed),
       },
     };
     this.postState();
