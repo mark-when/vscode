@@ -156,9 +156,9 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@markwhen/calendar": "^1.3.3",
+    "@markwhen/calendar": "^1.3.6",
     "@markwhen/parser": "^1.0.1",
-    "@markwhen/timeline": "^1.3.0",
+    "@markwhen/timeline": "^1.4.5",
     "node-html-parser": "^6.1.6",
     "vscode-languageclient": "^8.0.2"
   }
